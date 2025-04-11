@@ -47,6 +47,45 @@ exit_create:
   unifex_release_state(env, state);
   return res;
 }
+UNIFEX_TERM create_mulaw(UnifexEnv *env) {
+  UNIFEX_TERM res;
+  State *state = unifex_alloc_state(env);
+  state->codec_ctx = NULL;
+
+  av_log_set_level(AV_LOG_QUIET);
+
+#if (LIBAVCODEC_VERSION_MAJOR < 58)
+  avcodec_register_all();
+#endif
+  const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_PCM_MULAW);
+  if (!codec) {
+    res = create_result_error(env, "nocodec");
+    goto exit_create_mulaw;
+  }
+
+  state->codec_ctx = avcodec_alloc_context3(codec);
+  if (!state->codec_ctx) {
+    res = create_result_error(env, "codec_alloc");
+    goto exit_create_mulaw;
+  }
+
+  state->codec_ctx->sample_rate = G711_SAMPLE_RATE;
+#if (LIBAVCODEC_VERSION_MAJOR < 59 || (LIBAVCODEC_VERSION_MAJOR == 59 && LIBAVCODEC_VERSION_MINOR < 24))
+  state->codec_ctx->channels = G711_NUM_CHANNELS;
+#else
+  state->codec_ctx->ch_layout.nb_channels = G711_NUM_CHANNELS;
+#endif
+
+  if (avcodec_open2(state->codec_ctx, codec, NULL) < 0) {
+    res = create_result_error(env, "codec_open");
+    goto exit_create_mulaw;
+  }
+
+  res = create_result_ok(env, state);
+exit_create_mulaw:
+  unifex_release_state(env, state);
+  return res;
+}
 
 static int get_frames(UnifexEnv *env, AVPacket *pkt,
                       UnifexPayload ***ret_frames, int *max_frames,
