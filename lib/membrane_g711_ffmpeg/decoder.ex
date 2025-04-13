@@ -25,6 +25,11 @@ defmodule Membrane.G711.FFmpeg.Decoder do
       sample_rate: G711.sample_rate()
     }
 
+  def_options encoding: [
+                spec: :PCMA | :PCMU,
+                default: :PCMU
+              ]
+
   @impl true
   def handle_init(_ctx, opts) do
     state = %{decoder_ref: nil, encoding: opts[:encoding] || :PCMU}
