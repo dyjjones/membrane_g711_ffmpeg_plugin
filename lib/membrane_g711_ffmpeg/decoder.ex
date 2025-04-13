@@ -32,7 +32,7 @@ defmodule Membrane.G711.FFmpeg.Decoder do
 
   @impl true
   def handle_init(_ctx, opts) do
-    state = %{decoder_ref: nil, encoding: opts[:encoding] || :PCMU}
+    state = %{decoder_ref: nil, encoding: opts.encoding || :PCMU}
 
     {[], state}
   end
